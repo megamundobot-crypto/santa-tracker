@@ -159,9 +159,14 @@
             icon: L.divIcon({ className: '', html: '<div style="font-size:1.8rem">🏠</div>', iconSize: [30,30], iconAnchor: [15,30] })
         }).addTo(map).bindPopup('<div style="text-align:center;padding:5px"><b style="color:#ffd700">🏠 Tu Casa</b><br><span style="color:#87ceeb">'+DESTINO.nombre+'</span></div>');
 
-        // Marcador Santa
+        // Marcador Santa - Trineo completo con renos, Santa y bolsa de regalos
         santaMarker = L.marker([90, 0], {
-            icon: L.divIcon({ className: '', html: '<div style="font-size:2rem;filter:drop-shadow(2px 2px 2px black)">🛷</div>', iconSize: [40,40], iconAnchor: [20,20] }),
+            icon: L.divIcon({ 
+                className: '', 
+                html: '<div style="font-size:1.2rem;filter:drop-shadow(2px 2px 4px black);white-space:nowrap;background:rgba(0,0,0,0.5);padding:3px 6px;border-radius:8px;border:2px solid gold;">🦌🦌🛷🎅🎁</div>', 
+                iconSize: [90,35], 
+                iconAnchor: [45,17] 
+            }),
             zIndexOffset: 1000
         }).addTo(map);
 
