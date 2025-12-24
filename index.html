@@ -53,6 +53,13 @@
         .leaflet-popup-tip { background: #1a1a2e; }
         .dest-indicator { position: fixed; top: 60px; right: 10px; background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 10px; z-index: 1001; border: 1px solid #ffd700; }
         .dest-indicator span { color: #87ceeb; font-size: 0.8rem; }
+        .countdown-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2500; flex-direction: column; }
+        .countdown-overlay.active { display: flex; }
+        .countdown-overlay .big-number { font-size: 12rem; font-family: 'Mountains of Christmas', cursive; color: #ffd700; text-shadow: 0 0 30px #ffd700, 0 0 60px #ff6b6b; animation: pulse-number 1s ease-in-out infinite; }
+        .countdown-overlay .arriving-text { font-family: 'Mountains of Christmas', cursive; color: #ff6b6b; font-size: 2rem; margin-bottom: 20px; animation: blink 0.5s infinite; }
+        .countdown-overlay .house-icon { font-size: 3rem; margin-top: 20px; }
+        @keyframes pulse-number { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -112,6 +119,11 @@
         <div class="text">¡LLEGÓ A LA SEGUNDA CASA!</div>
         <div class="address">📍 Casa de tu Hermana<br>🏠 ¡Feliz Navidad!</div>
         <div style="margin-top:15px;font-size:2rem;">🎄🎁🦌🛷🎄</div>
+    </div>
+    <div class="countdown-overlay" id="countdownOverlay">
+        <div class="arriving-text" id="arrivingText">🎅 ¡SANTA ESTÁ LLEGANDO!</div>
+        <div class="big-number" id="bigCountdown">10</div>
+        <div class="house-icon" id="houseIcon">🏠</div>
     </div>
     <div class="config-modal" id="configModal">
         <div class="config-box">
@@ -178,6 +190,7 @@
         let map, santaMarker, tapCount = 0, tapTimer;
         let arrivedCasa1 = false, arrivedCasa2 = false;
         let casa1Marker, casa2Marker;
+        let countdownShownCasa1 = false, countdownShownCasa2 = false;
 
         // Crear nieve
         for(let i = 0; i < 40; i++) {
@@ -336,6 +349,21 @@
                 document.getElementById('statGifts').textContent = formatNum(giftsDelivered);
                 document.getElementById('statCountries').textContent = currentIdx + '/' + totalStops;
                 
+                // CUENTA REGRESIVA 10 SEGUNDOS - Casa 1
+                const secondsRemaining = Math.floor(remaining / 1000);
+                if(secondsRemaining <= 10 && secondsRemaining > 0 && !countdownShownCasa1) {
+                    countdownShownCasa1 = true;
+                    document.getElementById('arrivingText').textContent = '🎅 ¡SANTA LLEGANDO A TU CASA!';
+                    document.getElementById('houseIcon').textContent = '🏠';
+                    document.getElementById('countdownOverlay').classList.add('active');
+                }
+                if(secondsRemaining <= 10 && secondsRemaining > 0) {
+                    document.getElementById('bigCountdown').textContent = secondsRemaining;
+                }
+                if(secondsRemaining <= 0) {
+                    document.getElementById('countdownOverlay').classList.remove('active');
+                }
+                
                 // Zoom inteligente
                 if(Date.now() - lastZoomTime > 30000) {
                     lastZoomTime = Date.now();
@@ -386,6 +414,21 @@
                 document.getElementById('statSpeed').textContent = '50';
                 document.getElementById('statGifts').textContent = '7.8B';
                 document.getElementById('statCountries').textContent = '32/32';
+                
+                // CUENTA REGRESIVA 10 SEGUNDOS - Casa 2
+                const secondsRemaining2 = Math.floor(remaining / 1000);
+                if(secondsRemaining2 <= 10 && secondsRemaining2 > 0 && !countdownShownCasa2) {
+                    countdownShownCasa2 = true;
+                    document.getElementById('arrivingText').textContent = '🎅 ¡SANTA LLEGANDO A CASA 2!';
+                    document.getElementById('houseIcon').textContent = '🏡';
+                    document.getElementById('countdownOverlay').classList.add('active');
+                }
+                if(secondsRemaining2 <= 10 && secondsRemaining2 > 0) {
+                    document.getElementById('bigCountdown').textContent = secondsRemaining2;
+                }
+                if(secondsRemaining2 <= 0) {
+                    document.getElementById('countdownOverlay').classList.remove('active');
+                }
                 
                 if(Date.now() - lastZoomTime > 10000) {
                     lastZoomTime = Date.now();
