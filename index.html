@@ -24,6 +24,11 @@
         .countdown .label { color: #87ceeb; font-size: 0.8rem; }
         .progress-bar { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4); transition: width 1s; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,215,0,0.3); }
+        .stat-item { text-align: center; }
+        .stat-item .icon { font-size: 1.2rem; }
+        .stat-item .value { color: #ffd700; font-size: 0.9rem; font-weight: bold; }
+        .stat-item .label { color: #87ceeb; font-size: 0.55rem; text-transform: uppercase; }
         .snowflakes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
         .snowflake { position: absolute; color: white; animation: fall linear infinite; opacity: 0.7; }
         @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(360deg); } }
@@ -72,6 +77,28 @@
             <div class="label" id="countdownLabel">Para llegar</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="icon">📏</div>
+                <div class="value" id="statDistance">--</div>
+                <div class="label">Distancia</div>
+            </div>
+            <div class="stat-item">
+                <div class="icon">⚡</div>
+                <div class="value" id="statSpeed">--</div>
+                <div class="label">Velocidad</div>
+            </div>
+            <div class="stat-item">
+                <div class="icon">🎁</div>
+                <div class="value" id="statGifts">--</div>
+                <div class="label">Regalos</div>
+            </div>
+            <div class="stat-item">
+                <div class="icon">🌍</div>
+                <div class="value" id="statCountries">--</div>
+                <div class="label">Países</div>
+            </div>
+        </div>
     </div>
     <div class="celebration" id="celebration1">
         <div class="santa">🎅</div>
@@ -243,6 +270,23 @@
 
         let lastZoomTime = 0;
         
+        // Función para calcular distancia en km
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        // Formatear números grandes
+        function formatNum(n) {
+            if(n >= 1000000000) return (n/1000000000).toFixed(1) + 'B';
+            if(n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+            if(n >= 1000) return (n/1000).toFixed(1) + 'K';
+            return n.toFixed(0);
+        }
+        
         function updateSanta() {
             const now = new Date();
             const arrivalCasa1 = new Date(HORA_CASA1);
@@ -280,6 +324,17 @@
                 const s = Math.floor((remaining % 60000) / 1000);
                 document.getElementById('countdown').textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
                 document.getElementById('countdownLabel').textContent = 'Para llegar a Casa 1';
+                
+                // Actualizar estadísticas
+                const distToCasa = haversine(lat, lng, CASA1.lat, CASA1.lng);
+                const speed = 3000 + Math.random() * 500;
+                const totalGifts = 7800000000;
+                const giftsDelivered = Math.floor(totalGifts * progress);
+                
+                document.getElementById('statDistance').textContent = distToCasa.toFixed(0) + ' km';
+                document.getElementById('statSpeed').textContent = speed.toFixed(0);
+                document.getElementById('statGifts').textContent = formatNum(giftsDelivered);
+                document.getElementById('statCountries').textContent = currentIdx + '/' + totalStops;
                 
                 // Zoom inteligente
                 if(Date.now() - lastZoomTime > 30000) {
@@ -325,6 +380,13 @@
                 document.getElementById('countdown').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
                 document.getElementById('countdownLabel').textContent = 'Para llegar a Casa 2';
                 
+                // Estadísticas FASE 2
+                const distToCasa2 = haversine(lat, lng, CASA2.lat, CASA2.lng);
+                document.getElementById('statDistance').textContent = (distToCasa2 * 1000).toFixed(0) + ' m';
+                document.getElementById('statSpeed').textContent = '50';
+                document.getElementById('statGifts').textContent = '7.8B';
+                document.getElementById('statCountries').textContent = '32/32';
+                
                 if(Date.now() - lastZoomTime > 10000) {
                     lastZoomTime = Date.now();
                     const bounds = L.latLngBounds([[CASA1.lat, CASA1.lng], [CASA2.lat, CASA2.lng]]);
@@ -348,6 +410,12 @@
                 document.getElementById('countdown').textContent = '🎄🎁🎄';
                 document.getElementById('countdownLabel').textContent = '¡Feliz Navidad!';
                 document.getElementById('progress').style.width = '100%';
+                
+                // Estadísticas FASE 3
+                document.getElementById('statDistance').textContent = '0 m';
+                document.getElementById('statSpeed').textContent = '0';
+                document.getElementById('statGifts').textContent = '7.8B';
+                document.getElementById('statCountries').textContent = '✓ 32';
             }
         }
 
