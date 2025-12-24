@@ -3,278 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎅 Santa Tracker - NORAD Style</title>
+    <title>🎅 Santa Tracker - En Vivo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Orbitron', monospace; background: #0a0a1a; min-height: 100vh; overflow-x: hidden; }
-        .header { background: linear-gradient(90deg, #1a1a2e, #16213e); padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff00; position: relative; z-index: 1000; }
-        .header h1 { font-family: 'Mountains of Christmas', cursive; color: #00ff00; font-size: 1.2rem; text-shadow: 0 0 10px #00ff00; cursor: pointer; }
-        .header .live-badge { background: #ff0000; color: white; padding: 3px 10px; border-radius: 3px; font-size: 0.65rem; animation: pulse 1s infinite; font-family: 'Orbitron'; }
-        .sound-btn { background: #1a1a2e; border: 1px solid #00ff00; color: #00ff00; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.7rem; }
+        body { font-family: 'Quicksand', sans-serif; background: #0a0a1a; min-height: 100vh; }
+        .header { background: linear-gradient(90deg, #c41e3a, #228b22); padding: 12px; text-align: center; position: relative; z-index: 1000; }
+        .header h1 { font-family: 'Mountains of Christmas', cursive; color: white; font-size: 1.5rem; cursor: pointer; }
+        .header .live-badge { background: #ff0000; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; animation: pulse 1s infinite; margin-left: 8px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        #map { width: 100%; height: calc(100vh - 220px); }
-        .radar-panel { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 20, 30, 0.98); padding: 10px; border-top: 2px solid #00ff00; z-index: 1000; }
-        .radar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        .radar-item { background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 5px; padding: 8px; text-align: center; }
-        .radar-item .label { color: #00ff00; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; }
-        .radar-item .value { color: #fff; font-size: 1rem; font-weight: bold; margin-top: 3px; text-shadow: 0 0 5px #00ff00; }
-        .location-bar { display: flex; align-items: center; gap: 10px; background: rgba(0, 255, 0, 0.05); padding: 8px; border-radius: 5px; border: 1px solid #00ff00; }
-        .location-bar .flag { font-size: 1.8rem; }
-        .location-bar .info { flex: 1; }
-        .location-bar .country { color: #00ff00; font-size: 0.9rem; font-weight: bold; }
-        .location-bar .next { color: #ffd700; font-size: 0.65rem; margin-top: 2px; }
-        .countdown-box { text-align: center; margin-top: 8px; }
-        .countdown-box .time { font-size: 1.5rem; color: #00ff00; letter-spacing: 3px; text-shadow: 0 0 10px #00ff00; }
-        .countdown-box .label { color: #87ceeb; font-size: 0.6rem; margin-top: 2px; }
-        .progress-bar { width: 100%; height: 6px; background: rgba(0,255,0,0.2); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff00, #ffd700); transition: width 1s; }
+        #map { width: 100%; height: calc(100vh - 180px); }
+        .info-panel { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 10, 26, 0.95); padding: 12px; border-top: 2px solid #ffd700; z-index: 1000; }
+        .location-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .location-row .flag { font-size: 2rem; }
+        .location-row .country { color: #ffd700; font-family: 'Mountains of Christmas', cursive; font-size: 1.3rem; }
+        .location-row .city { color: #87ceeb; font-size: 0.85rem; }
+        .countdown { text-align: center; margin: 8px 0; }
+        .countdown .time { font-size: 1.8rem; color: #ffd700; font-family: 'Mountains of Christmas', cursive; }
+        .countdown .label { color: #87ceeb; font-size: 0.8rem; }
+        .progress-bar { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4); transition: width 1s; }
         .snowflakes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
-        .snowflake { position: absolute; color: white; animation: fall linear infinite; opacity: 0.6; }
+        .snowflake { position: absolute; color: white; animation: fall linear infinite; opacity: 0.7; }
         @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(360deg); } }
         .celebration { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 2000; flex-direction: column; }
         .celebration.active { display: flex; }
-        .celebration .santa { font-size: 5rem; animation: bounce 0.5s infinite; }
+        .celebration .santa { font-size: 6rem; animation: bounce 0.5s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        .celebration .text { font-family: 'Mountains of Christmas', cursive; color: #ffd700; font-size: 1.8rem; margin: 15px 0; text-align: center; }
-        .celebration .address { color: #87ceeb; font-size: 0.9rem; background: rgba(0,255,0,0.1); padding: 10px 20px; border-radius: 10px; border: 1px solid #00ff00; }
-        .celebration .close-btn { margin-top: 15px; background: #c41e3a; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron'; }
+        .celebration .text { font-family: 'Mountains of Christmas', cursive; color: #ffd700; font-size: 2rem; margin: 15px 0; text-align: center; }
+        .celebration .address { color: #87ceeb; font-size: 1rem; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 10px; text-align: center; }
+        .celebration .close-btn { margin-top: 20px; background: #c41e3a; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
         .confetti { position: absolute; width: 8px; height: 8px; animation: confetti-fall 3s linear infinite; }
         @keyframes confetti-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
-        .config-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 3000; }
+        .config-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 3000; overflow-y: auto; }
         .config-modal.active { display: flex; }
-        .config-box { background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #00ff00; text-align: center; max-width: 95%; }
-        .config-box h2 { font-family: 'Mountains of Christmas', cursive; color: #00ff00; margin-bottom: 15px; }
-        .config-box h3 { color: #ffd700; font-size: 0.8rem; margin: 12px 0 5px 0; }
-        .config-box input { width: 100%; padding: 10px; font-size: 1rem; border-radius: 5px; border: 1px solid #00ff00; background: #0a0a1a; color: #00ff00; text-align: center; font-family: 'Orbitron'; }
-        .config-box button { background: #00ff00; color: #0a0a1a; border: none; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; margin: 8px 5px; cursor: pointer; font-family: 'Orbitron'; font-weight: bold; }
-        .config-box .hint { color: #87ceeb; font-size: 0.65rem; margin-top: 10px; }
-        .leaflet-popup-content-wrapper { background: #1a1a2e; color: #00ff00; border-radius: 5px; border: 1px solid #00ff00; }
+        .config-box { background: #1a1a2e; padding: 20px; border-radius: 15px; border: 2px solid #ffd700; text-align: center; max-width: 95%; margin: 20px; }
+        .config-box h2 { font-family: 'Mountains of Christmas', cursive; color: #ffd700; margin-bottom: 15px; font-size: 1.3rem; }
+        .config-box h3 { color: #4ecdc4; font-size: 1rem; margin: 15px 0 8px 0; }
+        .config-box input { width: 100%; padding: 10px; font-size: 1rem; border-radius: 8px; border: none; margin: 5px 0; text-align: center; }
+        .config-box button { background: linear-gradient(90deg, #c41e3a, #228b22); color: white; border: none; padding: 12px 25px; font-size: 1rem; border-radius: 8px; margin: 8px 5px; cursor: pointer; }
+        .config-box .hint { color: #87ceeb; font-size: 0.75rem; margin-top: 10px; }
+        .leaflet-popup-content-wrapper { background: #1a1a2e; color: white; border-radius: 10px; border: 2px solid #ffd700; }
         .leaflet-popup-tip { background: #1a1a2e; }
-        .scan-line { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #00ff00, transparent); animation: scan 3s linear infinite; z-index: 998; pointer-events: none; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        .dest-indicator { position: fixed; top: 60px; right: 10px; background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 10px; z-index: 1001; border: 1px solid #ffd700; }
+        .dest-indicator span { color: #87ceeb; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <div class="scan-line"></div>
     <div class="snowflakes" id="snow"></div>
     <div class="header">
-        <h1 id="title">🎄 SANTA RADAR 🎄</h1>
-        <span class="live-badge">⚫ LIVE TRACKING</span>
-        <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔇 SONIDO</button>
+        <h1 id="title">🎄 Santa Tracker 🎄<span class="live-badge">EN VIVO</span></h1>
+    </div>
+    <div class="dest-indicator">
+        <span id="destIndicator">🏠 Próximo: Casa 1</span>
     </div>
     <div id="map"></div>
-    <div class="radar-panel">
-        <div class="radar-grid">
-            <div class="radar-item">
-                <div class="label">📏 Distancia</div>
-                <div class="value" id="distance">-- km</div>
-            </div>
-            <div class="radar-item">
-                <div class="label">⚡ Velocidad</div>
-                <div class="value" id="speed">-- km/h</div>
-            </div>
-            <div class="radar-item">
-                <div class="label">✈️ Altitud</div>
-                <div class="value" id="altitude">-- m</div>
-            </div>
-            <div class="radar-item">
-                <div class="label">🎁 Regalos</div>
-                <div class="value" id="gifts">--</div>
-            </div>
-        </div>
-        <div class="location-bar">
+    <div class="info-panel">
+        <div class="location-row">
             <span class="flag" id="flag">🏔️</span>
-            <div class="info">
-                <div class="country" id="country">POLO NORTE</div>
-                <div class="next" id="nextStop">▶ Próxima: Japón 🇯🇵</div>
+            <div>
+                <div class="country" id="country">Polo Norte</div>
+                <div class="city" id="city">Preparando el trineo...</div>
             </div>
         </div>
-        <div class="countdown-box">
+        <div class="countdown">
             <div class="time" id="countdown">--:--:--</div>
-            <div class="label" id="countdownLabel">TIEMPO RESTANTE</div>
+            <div class="label" id="countdownLabel">Para llegar</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
     </div>
     <div class="celebration" id="celebration1">
         <div class="santa">🎅</div>
-        <div class="text">¡OBJETIVO ALCANZADO!</div>
-        <div class="address">📍 CASA 1 - Roldán 234<br>🏠 ¡Feliz Navidad!</div>
-        <button class="close-btn" onclick="closeCel1()">▶ CONTINUAR TRACKING</button>
+        <div class="text" id="celText1">¡PAPÁ NOEL LLEGÓ!</div>
+        <div class="address" id="celAddr1">📍 Roldán 234<br>🏠 ¡Feliz Navidad!</div>
+        <div style="margin-top:15px;font-size:2rem;">🎄🎁🦌🛷🎄</div>
+        <button class="close-btn" onclick="closeCel1()">Continuar seguimiento →</button>
     </div>
     <div class="celebration" id="celebration2">
         <div class="santa">🎅</div>
-        <div class="text">¡MISIÓN COMPLETADA!</div>
-        <div class="address">📍 CASA 2 - Casa de tu Hermana<br>🎄 ¡Felices Fiestas!</div>
+        <div class="text">¡LLEGÓ A LA SEGUNDA CASA!</div>
+        <div class="address">📍 Casa de tu Hermana<br>🏠 ¡Feliz Navidad!</div>
+        <div style="margin-top:15px;font-size:2rem;">🎄🎁🦌🛷🎄</div>
     </div>
     <div class="config-modal" id="configModal">
         <div class="config-box">
-            <h2>⚙️ CONFIGURAR LLEGADAS</h2>
-            <h3>🏠 CASA 1 - Tu Casa</h3>
+            <h2>🎅 Configurar Llegadas</h2>
+            <h3>🏠 CASA 1 - Tu Casa (Roldán 234)</h3>
             <input type="time" id="arrival1Time" value="00:00">
             <input type="date" id="arrival1Date" value="2025-12-25">
-            <h3>🏡 CASA 2 - Casa Hermana</h3>
+            <h3>🏡 CASA 2 - Casa de Hermana</h3>
             <input type="time" id="arrival2Time" value="00:30">
             <input type="date" id="arrival2Date" value="2025-12-25">
             <br><br>
-            <button onclick="saveConfig()">✓ GUARDAR</button>
-            <button onclick="closeConfig()" style="background:#666;color:#fff;">✕ CANCELAR</button>
-            <div class="hint">Triple tap en el título para abrir config</div>
+            <button onclick="saveConfig()">✓ Guardar</button>
+            <button onclick="closeConfig()" style="background:#666;">✕ Cancelar</button>
+            <div class="hint">Tocá 3 veces el título para abrir esta configuración</div>
         </div>
     </div>
-    <audio id="bgMusic" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    </audio>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const CASA1 = { lat: -27.458241856223577, lng: -58.99881432883506, nombre: "Roldán 234" };
-        const CASA2 = { lat: -27.465750, lng: -59.004528, nombre: "Casa Hermana" };
+        // === DOS DESTINOS ===
+        const CASA1 = { lat: -27.458241856223577, lng: -58.99881432883506, nombre: "Roldán 234", label: "Tu Casa" };
+        const CASA2 = { lat: -27.465750, lng: -59.004528, nombre: "Casa Hermana", label: "Casa de tu Hermana" };
+        
+        // Horas de llegada
         let HORA_CASA1 = localStorage.getItem('santaCasa1') || '2025-12-25T00:00:00';
         let HORA_CASA2 = localStorage.getItem('santaCasa2') || '2025-12-25T00:30:00';
-        const RUTA = [
-            { lat: 90, lng: 0, nombre: "POLO NORTE", ciudad: "Taller de Santa", flag: "🏔️" },
-            { lat: 35.6762, lng: 139.6503, nombre: "JAPÓN", ciudad: "Tokio", flag: "🇯🇵" },
-            { lat: 37.5665, lng: 126.9780, nombre: "COREA DEL SUR", ciudad: "Seúl", flag: "🇰🇷" },
-            { lat: 39.9042, lng: 116.4074, nombre: "CHINA", ciudad: "Beijing", flag: "🇨🇳" },
-            { lat: 13.7563, lng: 100.5018, nombre: "TAILANDIA", ciudad: "Bangkok", flag: "🇹🇭" },
-            { lat: -33.8688, lng: 151.2093, nombre: "AUSTRALIA", ciudad: "Sídney", flag: "🇦🇺" },
-            { lat: 28.6139, lng: 77.2090, nombre: "INDIA", ciudad: "Nueva Delhi", flag: "🇮🇳" },
-            { lat: 25.2048, lng: 55.2708, nombre: "EMIRATOS", ciudad: "Dubai", flag: "🇦🇪" },
-            { lat: 55.7558, lng: 37.6173, nombre: "RUSIA", ciudad: "Moscú", flag: "🇷🇺" },
-            { lat: 52.5200, lng: 13.4050, nombre: "ALEMANIA", ciudad: "Berlín", flag: "🇩🇪" },
-            { lat: 48.8566, lng: 2.3522, nombre: "FRANCIA", ciudad: "París", flag: "🇫🇷" },
-            { lat: 51.5074, lng: -0.1278, nombre: "REINO UNIDO", ciudad: "Londres", flag: "🇬🇧" },
-            { lat: 40.4168, lng: -3.7038, nombre: "ESPAÑA", ciudad: "Madrid", flag: "🇪🇸" },
-            { lat: 30.0444, lng: 31.2357, nombre: "EGIPTO", ciudad: "El Cairo", flag: "🇪🇬" },
-            { lat: 40.7128, lng: -74.0060, nombre: "USA", ciudad: "Nueva York", flag: "🇺🇸" },
-            { lat: 19.4326, lng: -99.1332, nombre: "MÉXICO", ciudad: "CDMX", flag: "🇲🇽" },
-            { lat: 4.7110, lng: -74.0721, nombre: "COLOMBIA", ciudad: "Bogotá", flag: "🇨🇴" },
-            { lat: -12.0464, lng: -77.0428, nombre: "PERÚ", ciudad: "Lima", flag: "🇵🇪" },
-            { lat: -33.4489, lng: -70.6693, nombre: "CHILE", ciudad: "Santiago", flag: "🇨🇱" },
-            { lat: -22.9068, lng: -43.1729, nombre: "BRASIL", ciudad: "Río", flag: "🇧🇷" },
-            { lat: -34.6037, lng: -58.3816, nombre: "ARGENTINA", ciudad: "Buenos Aires", flag: "🇦🇷" },
-            { lat: -31.4201, lng: -64.1888, nombre: "ARGENTINA", ciudad: "Córdoba", flag: "🇦🇷" },
-            { lat: CASA1.lat, lng: CASA1.lng, nombre: "¡TU CASA!", ciudad: "Resistencia", flag: "🏠" }
+        
+        // Ruta mundial
+        const RUTA_MUNDIAL = [
+            { lat: 90, lng: 0, nombre: "Polo Norte", ciudad: "Taller de Santa", flag: "🏔️" },
+            { lat: 35.6762, lng: 139.6503, nombre: "Japón", ciudad: "Tokio", flag: "🇯🇵" },
+            { lat: 37.5665, lng: 126.9780, nombre: "Corea del Sur", ciudad: "Seúl", flag: "🇰🇷" },
+            { lat: 39.9042, lng: 116.4074, nombre: "China", ciudad: "Beijing", flag: "🇨🇳" },
+            { lat: 22.3193, lng: 114.1694, nombre: "Hong Kong", ciudad: "Hong Kong", flag: "🇭🇰" },
+            { lat: 13.7563, lng: 100.5018, nombre: "Tailandia", ciudad: "Bangkok", flag: "🇹🇭" },
+            { lat: 1.3521, lng: 103.8198, nombre: "Singapur", ciudad: "Singapur", flag: "🇸🇬" },
+            { lat: -33.8688, lng: 151.2093, nombre: "Australia", ciudad: "Sídney", flag: "🇦🇺" },
+            { lat: -36.8485, lng: 174.7633, nombre: "Nueva Zelanda", ciudad: "Auckland", flag: "🇳🇿" },
+            { lat: 28.6139, lng: 77.2090, nombre: "India", ciudad: "Nueva Delhi", flag: "🇮🇳" },
+            { lat: 25.2048, lng: 55.2708, nombre: "Emiratos Árabes", ciudad: "Dubai", flag: "🇦🇪" },
+            { lat: 31.7683, lng: 35.2137, nombre: "Israel", ciudad: "Jerusalén", flag: "🇮🇱" },
+            { lat: 41.0082, lng: 28.9784, nombre: "Turquía", ciudad: "Estambul", flag: "🇹🇷" },
+            { lat: 55.7558, lng: 37.6173, nombre: "Rusia", ciudad: "Moscú", flag: "🇷🇺" },
+            { lat: 52.5200, lng: 13.4050, nombre: "Alemania", ciudad: "Berlín", flag: "🇩🇪" },
+            { lat: 48.8566, lng: 2.3522, nombre: "Francia", ciudad: "París", flag: "🇫🇷" },
+            { lat: 51.5074, lng: -0.1278, nombre: "Reino Unido", ciudad: "Londres", flag: "🇬🇧" },
+            { lat: 40.4168, lng: -3.7038, nombre: "España", ciudad: "Madrid", flag: "🇪🇸" },
+            { lat: 30.0444, lng: 31.2357, nombre: "Egipto", ciudad: "El Cairo", flag: "🇪🇬" },
+            { lat: -33.9249, lng: 18.4241, nombre: "Sudáfrica", ciudad: "Ciudad del Cabo", flag: "🇿🇦" },
+            { lat: 45.4215, lng: -75.6972, nombre: "Canadá", ciudad: "Ottawa", flag: "🇨🇦" },
+            { lat: 40.7128, lng: -74.0060, nombre: "Estados Unidos", ciudad: "Nueva York", flag: "🇺🇸" },
+            { lat: 19.4326, lng: -99.1332, nombre: "México", ciudad: "Ciudad de México", flag: "🇲🇽" },
+            { lat: 23.1136, lng: -82.3666, nombre: "Cuba", ciudad: "La Habana", flag: "🇨🇺" },
+            { lat: 4.7110, lng: -74.0721, nombre: "Colombia", ciudad: "Bogotá", flag: "🇨🇴" },
+            { lat: -12.0464, lng: -77.0428, nombre: "Perú", ciudad: "Lima", flag: "🇵🇪" },
+            { lat: -33.4489, lng: -70.6693, nombre: "Chile", ciudad: "Santiago", flag: "🇨🇱" },
+            { lat: -22.9068, lng: -43.1729, nombre: "Brasil", ciudad: "Río de Janeiro", flag: "🇧🇷" },
+            { lat: -34.9011, lng: -56.1645, nombre: "Uruguay", ciudad: "Montevideo", flag: "🇺🇾" },
+            { lat: -25.2637, lng: -57.5759, nombre: "Paraguay", ciudad: "Asunción", flag: "🇵🇾" },
+            { lat: -34.6037, lng: -58.3816, nombre: "Argentina", ciudad: "Buenos Aires", flag: "🇦🇷" },
+            { lat: -31.4201, lng: -64.1888, nombre: "Argentina", ciudad: "Córdoba", flag: "🇦🇷" },
+            { lat: CASA1.lat, lng: CASA1.lng, nombre: "¡CASA 1!", ciudad: CASA1.nombre, flag: "🏠" }
         ];
-        let map, santaMarker, tapCount = 0, tapTimer, soundOn = false;
+
+        let map, santaMarker, tapCount = 0, tapTimer;
         let arrivedCasa1 = false, arrivedCasa2 = false;
-        for(let i = 0; i < 30; i++) {
+        let casa1Marker, casa2Marker;
+
+        // Crear nieve
+        for(let i = 0; i < 40; i++) {
             const s = document.createElement('div');
             s.className = 'snowflake';
             s.innerHTML = ['❄','❅','❆'][Math.floor(Math.random()*3)];
             s.style.left = Math.random()*100+'vw';
-            s.style.animationDuration = (Math.random()*3+4)+'s';
+            s.style.animationDuration = (Math.random()*3+3)+'s';
             s.style.animationDelay = Math.random()*5+'s';
-            s.style.fontSize = (Math.random()*10+6)+'px';
+            s.style.fontSize = (Math.random()*12+8)+'px';
             document.getElementById('snow').appendChild(s);
         }
-        function toggleSound() {
-            const audio = document.getElementById('bgMusic');
-            const btn = document.getElementById('soundBtn');
-            if(soundOn) { audio.pause(); btn.textContent = '🔇 SONIDO'; soundOn = false; }
-            else { audio.volume = 0.3; audio.play(); btn.textContent = '🔊 SONIDO'; soundOn = true; }
-        }
+
+        // Triple tap para config
         document.getElementById('title').addEventListener('click', () => {
-            tapCount++; clearTimeout(tapTimer);
+            tapCount++;
+            clearTimeout(tapTimer);
             tapTimer = setTimeout(() => tapCount = 0, 500);
-            if(tapCount >= 3) { tapCount = 0; openConfig(); }
+            if(tapCount >= 3) {
+                tapCount = 0;
+                openConfig();
+            }
         });
+
         function openConfig() {
             document.getElementById('configModal').classList.add('active');
-            const a1 = new Date(HORA_CASA1), a2 = new Date(HORA_CASA2);
+            const a1 = new Date(HORA_CASA1);
+            const a2 = new Date(HORA_CASA2);
             document.getElementById('arrival1Time').value = a1.toTimeString().slice(0,5);
             document.getElementById('arrival1Date').value = a1.toISOString().slice(0,10);
             document.getElementById('arrival2Time').value = a2.toTimeString().slice(0,5);
             document.getElementById('arrival2Date').value = a2.toISOString().slice(0,10);
         }
+
         function saveConfig() {
-            HORA_CASA1 = `${document.getElementById('arrival1Date').value}T${document.getElementById('arrival1Time').value}:00`;
-            HORA_CASA2 = `${document.getElementById('arrival2Date').value}T${document.getElementById('arrival2Time').value}:00`;
+            const t1 = document.getElementById('arrival1Time').value;
+            const d1 = document.getElementById('arrival1Date').value;
+            const t2 = document.getElementById('arrival2Time').value;
+            const d2 = document.getElementById('arrival2Date').value;
+            HORA_CASA1 = `${d1}T${t1}:00`;
+            HORA_CASA2 = `${d2}T${t2}:00`;
             localStorage.setItem('santaCasa1', HORA_CASA1);
             localStorage.setItem('santaCasa2', HORA_CASA2);
             document.getElementById('configModal').classList.remove('active');
-            arrivedCasa1 = arrivedCasa2 = false;
+            arrivedCasa1 = false;
+            arrivedCasa2 = false;
+            updateSanta();
         }
-        function closeConfig() { document.getElementById('configModal').classList.remove('active'); }
-        function closeCel1() { document.getElementById('celebration1').classList.remove('active'); }
-        function haversine(lat1,lon1,lat2,lon2) {
-            const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        function closeConfig() {
+            document.getElementById('configModal').classList.remove('active');
         }
-        map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20, 0], 2);
-        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-        L.marker([CASA1.lat, CASA1.lng], { icon: L.divIcon({ className: '', html: '<div style="font-size:1.5rem;filter:drop-shadow(0 0 5px #00ff00)">🏠</div>', iconSize: [25,25], iconAnchor: [12,25] }) }).addTo(map);
-        L.marker([CASA2.lat, CASA2.lng], { icon: L.divIcon({ className: '', html: '<div style="font-size:1.5rem;filter:drop-shadow(0 0 5px #ffd700)">🏡</div>', iconSize: [25,25], iconAnchor: [12,25] }) }).addTo(map);
-        santaMarker = L.marker([90, 0], { icon: L.divIcon({ className: '', html: '<div style="font-size:1.1rem;background:rgba(0,0,0,0.7);padding:3px 6px;border-radius:5px;border:1px solid #00ff00;white-space:nowrap;filter:drop-shadow(0 0 5px #00ff00)">🦌🦌🛷🎅🎁</div>', iconSize: [85,30], iconAnchor: [42,15] }), zIndexOffset: 1000 }).addTo(map);
-        RUTA.forEach((r, i) => { if(i > 0 && i < RUTA.length - 1) L.marker([r.lat, r.lng], { icon: L.divIcon({ className: '', html: `<div style="font-size:1rem;opacity:0.7">${r.flag}</div>`, iconSize: [18,18], iconAnchor: [9,9] }) }).addTo(map); });
-        let lastZoom = 0;
-        function update() {
-            const now = new Date(), arr1 = new Date(HORA_CASA1), arr2 = new Date(HORA_CASA2);
-            if(now < arr1) {
-                const dur = 24*60*60*1000, start = new Date(arr1.getTime() - dur);
-                const prog = Math.max(0, Math.min(1, (now - start) / dur));
-                const stops = RUTA.length - 1, exact = prog * stops;
-                const idx = Math.min(Math.floor(exact), stops - 1), frac = exact - idx;
-                const from = RUTA[idx], to = RUTA[Math.min(idx + 1, stops)];
-                const lat = from.lat + (to.lat - from.lat) * frac;
-                const lng = from.lng + (to.lng - from.lng) * frac;
+
+        function closeCel1() {
+            document.getElementById('celebration1').classList.remove('active');
+        }
+
+        // Inicializar mapa
+        map = L.map('map', { zoomControl: true, attributionControl: false }).setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+        // Marcadores de las 2 casas
+        casa1Marker = L.marker([CASA1.lat, CASA1.lng], {
+            icon: L.divIcon({ className: '', html: '<div style="font-size:1.8rem">🏠</div>', iconSize: [30,30], iconAnchor: [15,30] })
+        }).addTo(map).bindPopup('<div style="text-align:center;padding:5px"><b style="color:#ffd700">🏠 '+CASA1.label+'</b><br><span style="color:#87ceeb">'+CASA1.nombre+'</span></div>');
+
+        casa2Marker = L.marker([CASA2.lat, CASA2.lng], {
+            icon: L.divIcon({ className: '', html: '<div style="font-size:1.8rem">🏡</div>', iconSize: [30,30], iconAnchor: [15,30] })
+        }).addTo(map).bindPopup('<div style="text-align:center;padding:5px"><b style="color:#4ecdc4">🏡 '+CASA2.label+'</b><br><span style="color:#87ceeb">'+CASA2.nombre+'</span></div>');
+
+        // Marcador Santa
+        santaMarker = L.marker([90, 0], {
+            icon: L.divIcon({ 
+                className: '', 
+                html: '<div style="font-size:1.2rem;filter:drop-shadow(2px 2px 4px black);white-space:nowrap;background:rgba(0,0,0,0.5);padding:3px 6px;border-radius:8px;border:2px solid gold;">🦌🦌🛷🎅🎁</div>', 
+                iconSize: [90,35], 
+                iconAnchor: [45,17] 
+            }),
+            zIndexOffset: 1000
+        }).addTo(map);
+
+        // Marcadores de paradas
+        RUTA_MUNDIAL.forEach((r, i) => {
+            if(i > 0 && i < RUTA_MUNDIAL.length - 1) {
+                L.marker([r.lat, r.lng], {
+                    icon: L.divIcon({ className: '', html: `<div style="font-size:1.2rem">${r.flag}</div>`, iconSize: [20,20], iconAnchor: [10,10] })
+                }).addTo(map).bindPopup(`<div style="text-align:center"><b style="color:#ffd700">${r.flag} ${r.nombre}</b><br><span style="color:#87ceeb">${r.ciudad}</span></div>`);
+            }
+        });
+
+        let lastZoomTime = 0;
+        
+        function updateSanta() {
+            const now = new Date();
+            const arrivalCasa1 = new Date(HORA_CASA1);
+            const arrivalCasa2 = new Date(HORA_CASA2);
+            
+            // FASE 1: Recorrido mundial hasta Casa 1
+            if(now < arrivalCasa1) {
+                document.getElementById('destIndicator').textContent = '🏠 Próximo: Casa 1';
+                const totalDuration = 24 * 60 * 60 * 1000;
+                const startTime = new Date(arrivalCasa1.getTime() - totalDuration);
+                const elapsed = now.getTime() - startTime.getTime();
+                const progress = Math.max(0, Math.min(1, elapsed / totalDuration));
+                
+                const totalStops = RUTA_MUNDIAL.length - 1;
+                const exactStop = progress * totalStops;
+                const currentIdx = Math.min(Math.floor(exactStop), totalStops - 1);
+                const stopProgress = exactStop - currentIdx;
+                
+                const from = RUTA_MUNDIAL[currentIdx];
+                const to = RUTA_MUNDIAL[Math.min(currentIdx + 1, totalStops)];
+                
+                const lat = from.lat + (to.lat - from.lat) * stopProgress;
+                const lng = from.lng + (to.lng - from.lng) * stopProgress;
+                
                 santaMarker.setLatLng([lat, lng]);
-                const distToCasa = haversine(lat, lng, CASA1.lat, CASA1.lng);
-                const speed = 3000 + Math.random() * 500;
-                const alt = 10000 + Math.random() * 2000;
-                const gifts = Math.floor(7000000000 * (1 - prog));
-                document.getElementById('distance').textContent = distToCasa.toFixed(0) + ' km';
-                document.getElementById('speed').textContent = speed.toFixed(0) + ' km/h';
-                document.getElementById('altitude').textContent = alt.toFixed(0) + ' m';
-                document.getElementById('gifts').textContent = gifts.toLocaleString();
+                
                 document.getElementById('flag').textContent = from.flag;
                 document.getElementById('country').textContent = from.nombre;
-                document.getElementById('nextStop').textContent = to ? `▶ Próxima: ${to.ciudad} ${to.flag}` : '';
-                document.getElementById('progress').style.width = (prog * 100) + '%';
-                const rem = arr1 - now;
-                const h = Math.floor(rem / 3600000), m = Math.floor((rem % 3600000) / 60000), s = Math.floor((rem % 60000) / 1000);
+                document.getElementById('city').textContent = from.ciudad;
+                document.getElementById('progress').style.width = (progress * 100) + '%';
+                
+                const remaining = arrivalCasa1.getTime() - now.getTime();
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
                 document.getElementById('countdown').textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                document.getElementById('countdownLabel').textContent = 'TIEMPO PARA CASA 1';
-                if(Date.now() - lastZoom > 30000) { lastZoom = Date.now(); map.flyTo([lat, lng], rem < 3600000 ? 6 : 3, { duration: 2 }); }
-            } else if(now >= arr1 && now < arr2) {
-                if(!arrivedCasa1) { arrivedCasa1 = true; showCel(1); }
-                const prog = Math.min(1, (now - arr1) / (arr2 - arr1));
-                const lat = CASA1.lat + (CASA2.lat - CASA1.lat) * prog;
-                const lng = CASA1.lng + (CASA2.lng - CASA1.lng) * prog;
+                document.getElementById('countdownLabel').textContent = 'Para llegar a Casa 1';
+                
+                // Zoom inteligente
+                if(Date.now() - lastZoomTime > 30000) {
+                    lastZoomTime = Date.now();
+                    const hoursRemaining = remaining / 3600000;
+                    if(hoursRemaining <= 1) {
+                        const bounds = L.latLngBounds([[lat, lng], [CASA1.lat, CASA1.lng]]);
+                        map.flyToBounds(bounds.pad(0.3), { duration: 2, maxZoom: 10 });
+                    } else if(hoursRemaining <= 3) {
+                        const bounds = L.latLngBounds([[lat, lng], [CASA1.lat, CASA1.lng]]);
+                        map.flyToBounds(bounds.pad(0.5), { duration: 2, maxZoom: 6 });
+                    } else {
+                        map.flyTo([lat, lng], 3, { duration: 2 });
+                    }
+                }
+            }
+            // FASE 2: Llegó a Casa 1, viaja a Casa 2
+            else if(now >= arrivalCasa1 && now < arrivalCasa2) {
+                if(!arrivedCasa1) {
+                    arrivedCasa1 = true;
+                    showCelebration(1);
+                }
+                
+                document.getElementById('destIndicator').textContent = '🏡 Próximo: Casa 2';
+                
+                const travelTime = arrivalCasa2.getTime() - arrivalCasa1.getTime();
+                const elapsed = now.getTime() - arrivalCasa1.getTime();
+                const progress = Math.min(1, elapsed / travelTime);
+                
+                const lat = CASA1.lat + (CASA2.lat - CASA1.lat) * progress;
+                const lng = CASA1.lng + (CASA2.lng - CASA1.lng) * progress;
+                
                 santaMarker.setLatLng([lat, lng]);
-                document.getElementById('distance').textContent = haversine(lat, lng, CASA2.lat, CASA2.lng).toFixed(1) + ' km';
-                document.getElementById('speed').textContent = '50 km/h';
-                document.getElementById('altitude').textContent = '100 m';
+                
                 document.getElementById('flag').textContent = '🦌';
-                document.getElementById('country').textContent = 'EN CAMINO';
-                document.getElementById('nextStop').textContent = '▶ Casa 2 🏡';
-                document.getElementById('progress').style.width = (prog * 100) + '%';
-                const rem = arr2 - now;
-                const m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
+                document.getElementById('country').textContent = 'En camino...';
+                document.getElementById('city').textContent = 'Casa 1 → Casa 2';
+                document.getElementById('progress').style.width = (progress * 100) + '%';
+                
+                const remaining = arrivalCasa2.getTime() - now.getTime();
+                const m = Math.floor(remaining / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
                 document.getElementById('countdown').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                document.getElementById('countdownLabel').textContent = 'TIEMPO PARA CASA 2';
-                if(Date.now() - lastZoom > 10000) { lastZoom = Date.now(); map.flyToBounds([[CASA1.lat, CASA1.lng], [CASA2.lat, CASA2.lng]], { padding: [50,50], maxZoom: 15, duration: 2 }); }
-            } else {
-                if(!arrivedCasa2) { arrivedCasa2 = true; santaMarker.setLatLng([CASA2.lat, CASA2.lng]); document.getElementById('celebration1').classList.remove('active'); showCel(2); map.flyTo([CASA2.lat, CASA2.lng], 17, { duration: 2 }); }
-                document.getElementById('distance').textContent = '0 km';
-                document.getElementById('speed').textContent = '0 km/h';
-                document.getElementById('altitude').textContent = '0 m';
-                document.getElementById('gifts').textContent = '🎁';
+                document.getElementById('countdownLabel').textContent = 'Para llegar a Casa 2';
+                
+                if(Date.now() - lastZoomTime > 10000) {
+                    lastZoomTime = Date.now();
+                    const bounds = L.latLngBounds([[CASA1.lat, CASA1.lng], [CASA2.lat, CASA2.lng]]);
+                    map.flyToBounds(bounds.pad(0.5), { duration: 2, maxZoom: 15 });
+                }
+            }
+            // FASE 3: Llegó a Casa 2
+            else {
+                if(!arrivedCasa2) {
+                    arrivedCasa2 = true;
+                    santaMarker.setLatLng([CASA2.lat, CASA2.lng]);
+                    document.getElementById('celebration1').classList.remove('active');
+                    showCelebration(2);
+                    map.flyTo([CASA2.lat, CASA2.lng], 17, { duration: 2 });
+                }
+                
+                document.getElementById('destIndicator').textContent = '✅ ¡Llegó a ambas casas!';
                 document.getElementById('flag').textContent = '🎅';
                 document.getElementById('country').textContent = '¡LLEGÓ!';
-                document.getElementById('nextStop').textContent = '✓ Misión completada';
+                document.getElementById('city').textContent = 'Papá Noel completó su recorrido';
                 document.getElementById('countdown').textContent = '🎄🎁🎄';
-                document.getElementById('countdownLabel').textContent = '¡FELIZ NAVIDAD!';
+                document.getElementById('countdownLabel').textContent = '¡Feliz Navidad!';
                 document.getElementById('progress').style.width = '100%';
             }
         }
-        function showCel(n) {
-            const cel = document.getElementById('celebration' + n);
+
+        function showCelebration(num) {
+            const cel = document.getElementById('celebration' + num);
             cel.classList.add('active');
-            const colors = ['#ff0000','#00ff00','#ffd700','#ff69b4','#00ffff'];
-            for(let i = 0; i < 50; i++) {
+            const colors = ['#ff6b6b','#ffd700','#4ecdc4','#ff9ff3','#54a0ff'];
+            for(let i = 0; i < 60; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
                 c.style.left = Math.random()*100+'vw';
@@ -283,8 +364,9 @@
                 cel.appendChild(c);
             }
         }
-        update();
-        setInterval(update, 1000);
+
+        updateSanta();
+        setInterval(updateSanta, 1000);
     </script>
 </body>
 </html>
