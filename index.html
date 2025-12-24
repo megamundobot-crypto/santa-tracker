@@ -177,6 +177,9 @@
             }
         });
 
+        let lastZoomTime = 0;
+        let hasArrived = false;
+        
         function updateSanta() {
             const now = new Date();
             const arrival = new Date(HORA_LLEGADA);
@@ -215,33 +218,62 @@
                 document.getElementById('countdown').textContent = 
                     `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
                 document.getElementById('countdownLabel').textContent = 'Para llegar a tu casa';
+                
+                // === ZOOM INTELIGENTE ===
+                const hoursRemaining = remaining / 3600000;
+                const nowTime = Date.now();
+                
+                // Solo actualizar zoom cada 30 segundos
+                if(nowTime - lastZoomTime > 30000) {
+                    lastZoomTime = nowTime;
+                    
+                    if(hoursRemaining <= 1) {
+                        // Última hora: Mostrar Santa y casa juntos con zoom alto
+                        const bounds = L.latLngBounds([[lat, lng], [DESTINO.lat, DESTINO.lng]]);
+                        map.flyToBounds(bounds.pad(0.3), { duration: 2, maxZoom: 10 });
+                    } else if(hoursRemaining <= 3) {
+                        // Últimas 3 horas: Mostrar ambos con zoom medio
+                        const bounds = L.latLngBounds([[lat, lng], [DESTINO.lat, DESTINO.lng]]);
+                        map.flyToBounds(bounds.pad(0.5), { duration: 2, maxZoom: 6 });
+                    } else if(hoursRemaining <= 6) {
+                        // Últimas 6 horas: Vista de Sudamérica
+                        const bounds = L.latLngBounds([[lat, lng], [DESTINO.lat, DESTINO.lng]]);
+                        map.flyToBounds(bounds.pad(0.8), { duration: 2, maxZoom: 4 });
+                    } else {
+                        // Más de 6 horas: Vista mundial centrada en Santa
+                        map.flyTo([lat, lng], 3, { duration: 2 });
+                    }
+                }
+                
             } else {
                 // ¡Llegó!
-                document.getElementById('countdown').textContent = '¡LLEGÓ!';
-                document.getElementById('countdownLabel').textContent = '🎅 Papá Noel está en tu casa';
-                santaMarker.setLatLng([DESTINO.lat, DESTINO.lng]);
-                map.flyTo([DESTINO.lat, DESTINO.lng], 16, { duration: 2 });
-                
-                setTimeout(() => {
-                    const cel = document.getElementById('celebration');
-                    cel.classList.add('active');
-                    // Confeti
-                    const colors = ['#ff6b6b','#ffd700','#4ecdc4','#ff9ff3','#54a0ff'];
-                    for(let i = 0; i < 80; i++) {
-                        const c = document.createElement('div');
-                        c.className = 'confetti';
-                        c.style.left = Math.random()*100+'vw';
-                        c.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
-                        c.style.animationDelay = Math.random()*3+'s';
-                        cel.appendChild(c);
-                    }
-                }, 2000);
+                if(!hasArrived) {
+                    hasArrived = true;
+                    document.getElementById('countdown').textContent = '¡LLEGÓ!';
+                    document.getElementById('countdownLabel').textContent = '🎅 Papá Noel está en tu casa';
+                    santaMarker.setLatLng([DESTINO.lat, DESTINO.lng]);
+                    
+                    // Zoom dramático hacia la casa
+                    map.flyTo([DESTINO.lat, DESTINO.lng], 8, { duration: 2 });
+                    setTimeout(() => map.flyTo([DESTINO.lat, DESTINO.lng], 12, { duration: 2 }), 2500);
+                    setTimeout(() => map.flyTo([DESTINO.lat, DESTINO.lng], 16, { duration: 2 }), 5000);
+                    
+                    setTimeout(() => {
+                        const cel = document.getElementById('celebration');
+                        cel.classList.add('active');
+                        // Confeti
+                        const colors = ['#ff6b6b','#ffd700','#4ecdc4','#ff9ff3','#54a0ff'];
+                        for(let i = 0; i < 80; i++) {
+                            const c = document.createElement('div');
+                            c.className = 'confetti';
+                            c.style.left = Math.random()*100+'vw';
+                            c.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                            c.style.animationDelay = Math.random()*3+'s';
+                            cel.appendChild(c);
+                        }
+                    }, 6000);
+                }
                 return;
-            }
-            
-            // Centrar mapa en Santa cada cierto tiempo
-            if(Math.random() < 0.02) {
-                map.flyTo([lat, lng], 4, { duration: 2 });
             }
         }
 
